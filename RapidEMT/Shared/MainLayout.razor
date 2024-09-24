@@ -1,0 +1,26 @@
+﻿@inherits LayoutComponentBase
+
+<AuthorizeView>
+    <Authorized>
+<PageTitle>EMPLOYEE MANAGEMENT SERVICE</PageTitle>
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+                <div class="top-row px-0" style="background-color: #007BFF;">
+                  
+                </div>
+
+       
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+    </Authorized>
+<NotAuthorized>
+ <RedirectToLogin/>
+</NotAuthorized>
+</AuthorizeView>d

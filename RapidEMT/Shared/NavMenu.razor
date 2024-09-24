@@ -1,0 +1,49 @@
+﻿<div class="top-row ps-3 navbar navbar-expand-lg navbar-dark bg-gradient py-3">
+    <div class="container-fluid d-flex align-items-center">
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="" style="color: #007BFF;">
+            <img src="/images/Employee management.png" alt="EMS Logo" style="height: 40px; margin-right: 6px; border-radius: 50%;">
+            <span style="color: #007BFF; font-size: 14px; font-weight: bold; font-style: italic;">EMS</span>
+            <span style="color: #28A745; font-size: 14px; font-weight: bold; font-style: italic; margin-left: 5px;">MANAGEMENT</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+
+<div class="@NavMenuCssClass bg-dark nav-scrollable d-flex flex-column">
+    <nav class="flex-grow-1">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-light fw-semibold" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home me-2" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-light fw-semibold" href="/employees">
+                <span class="oi oi-people me-2" aria-hidden="true"></span> Employees
+            </NavLink>
+        </div>
+    </nav>
+
+    <div class="mt-auto px-3">
+        <NavLink class="nav-link text-light fw-semibold" href="Identity\Account\Logout">
+            <span class="oi oi-account-logout me-2" aria-hidden="true"></span> Logout
+        </NavLink>
+    </div>
+</div>
+
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

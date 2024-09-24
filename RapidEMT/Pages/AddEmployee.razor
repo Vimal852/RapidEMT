@@ -1,0 +1,11 @@
+﻿@page "/AddEmployee"
+@using RapidEMT.Models.DTO
+@using RapidEMT.Services
+<h3>AddEmployee</h3>
+
+@code {
+    [Inject]
+    private IEmployeeService EmployeeServices { get; set; }
+    private AddEmployeeForm addEmployeeForm = new();
+
+}
