@@ -1,0 +1,155 @@
+﻿@page "/employee/{employeeId:int}"
+@using RapidEMT.Models.DTO
+@using RapidEMT.Services
+@using RapidEMT.Models
+@using Blazored.Toast.Services
+@using RapidEMT.Models.Responses
+
+<Blazored.Toast.BlazoredToasts></Blazored.Toast.BlazoredToasts>
+
+<Card>
+    <div class="row user-detail-row">
+        <h3>Update Employee</h3>
+        <div class="form-group">
+            <EditForm Model="@addEmployeeForm" OnValidSubmit="EditEmployee">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-floating mb-3">
+                    <InputText class="form-control" id="floatingInput" placeholder="Name here" @bind-Value="addEmployeeForm.Name" />
+                    <label for="floatingInput">Name</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputNumber class="form-control" id="floatingInput" placeholder="Salary here" @bind-Value="addEmployeeForm.Salary" />
+                    <label for="floatingInput">Salary</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputSelect id="floatingInput" @bind-Value="addEmployeeForm.Type" class="form-select">
+                        @foreach (EmployeeType type in Enum.GetValues(typeof(EmployeeType)))
+                        {
+                            <option value="@type">@type.GetDisplayName()</option>
+                        }
+                    </InputSelect>
+                    <label for="floatingInput">Employment Type</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputSelect id="floatingInput" @bind-Value="addEmployeeForm.Position" class="form-select">
+                        @foreach (Position position in Enum.GetValues(typeof(Position)))
+                        {
+                            <option value="@position">@position.GetDisplayName()</option>
+                        }
+                    </InputSelect>
+                    <label for="floatingInput">Position</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputText class="form-control" id="floatingInput" placeholder="Image URL" @bind-Value="addEmployeeForm.ImgUrl" />
+                    <label for="floatingInput">Image URL</label>
+                </div>
+
+                <button class="btn btn-primary" type="submit">Update</button>
+                <button type="button" class="btn btn-danger" @onclick="ShowDeleteConfirmation">Delete</button>
+            </EditForm>
+        </div>
+    </div>
+</Card>
+
+<!-- Delete Confirmation Modal -->
+@if (IsDeleteDialogVisible)
+{
+    <div class="modal fade show" tabindex="-1" style="display:block;" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" @onclick="HideDeleteConfirmation"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the employee <strong>@Employee.Name</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideDeleteConfirmation">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int EmployeeId { get; set; }
+
+    [Inject] private IEmployeeService EmployeeService { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
+    [Inject] private IToastService ToastService { get; set; }
+
+    private AddEmployeeForm addEmployeeForm = new();
+    private Employee Employee;
+
+    private bool IsDeleteDialogVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await EmployeeService.GetEmployee(EmployeeId);
+        if (response != null && response.Employee != null)
+        {
+            Employee = response.Employee;
+
+            addEmployeeForm.Name = Employee.Name;
+            addEmployeeForm.Type = Employee.Type;
+            addEmployeeForm.Position = Employee.Position;
+            addEmployeeForm.Salary = Employee.Salary;
+            addEmployeeForm.ImgUrl = Employee.ImgUrl; // Ensure ImgUrl is set as well.
+        }
+        else
+        {
+            ToastService.ShowError("Employee not found.");
+            NavigationManager.NavigateTo("/employees");
+        }
+    }
+
+    private async Task EditEmployee()
+    {
+        Employee.Name = addEmployeeForm.Name;
+        Employee.Type = addEmployeeForm.Type;
+        Employee.Position = addEmployeeForm.Position;
+        Employee.Salary = addEmployeeForm.Salary;
+        Employee.ImgUrl = addEmployeeForm.ImgUrl;
+
+        var response = await EmployeeService.EditEmployee(Employee);
+        ToastService.ShowSuccess(response.Message ?? "Employee updated successfully");
+        await Task.Delay(2000);
+        NavigationManager.NavigateTo("/employees", true);
+    }
+
+    private void ShowDeleteConfirmation()
+    {
+        IsDeleteDialogVisible = true;
+    }
+
+    private void HideDeleteConfirmation()
+    {
+        IsDeleteDialogVisible = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        var response = await EmployeeService.DeleteEmployee(Employee);
+
+        if (response.StatusCode == 204)
+        {
+            ToastService.ShowSuccess(response.Message ?? "Employee deleted successfully");
+            await Task.Delay(2000);
+            NavigationManager.NavigateTo("/employees", true);
+        }
+        else
+        {
+            ToastService.ShowError(response.Message ?? "Error occurred while deleting employee.");
+        }
+
+        IsDeleteDialogVisible = false;
+    }
+}

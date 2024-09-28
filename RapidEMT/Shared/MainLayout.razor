@@ -1,7 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@using Blazored.Toast.Services
+@inject IToastService ToastService
 
-<AuthorizeView>
-    <Authorized>
 <PageTitle>EMPLOYEE MANAGEMENT SERVICE</PageTitle>
 <div class="page">
     <div class="sidebar">
@@ -9,18 +9,25 @@
     </div>
 
     <main>
-                <div class="top-row px-0" style="background-color: #007BFF;">
-                  
-                </div>
-
-       
+        <div class="top-row px-0" style="background-color: #007BFF;">
+            <!-- Your top row content can go here -->
+        </div>
+        
         <article class="content px-4">
             @Body
         </article>
     </main>
 </div>
+
+<!-- Toast notifications should be available globally -->
+
+
+<!-- Authorization for protected content -->
+<AuthorizeView>
+    <Authorized>
+        <!-- The authorized content will be displayed here -->
     </Authorized>
-<NotAuthorized>
- <RedirectToLogin/>
-</NotAuthorized>
-</AuthorizeView>d
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>

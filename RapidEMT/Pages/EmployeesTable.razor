@@ -6,13 +6,19 @@
 <h1>
     <span style="color: #7e3d2f; font-size: 24px; font-weight: bold; font-style: bold;">ACTIVE EMPLOYEES</span>
 </h1>
-@if (Employees != null)
+
+<!-- Search Box -->
+<div class="mb-3">
+    <input @bind="SearchTerm" @bind:event="oninput" placeholder="Search by name or position..." class="form-control" />
+</div>
+
+@if (FilteredEmployees != null && FilteredEmployees.Any())
 {
     <Card>
         <div class="table-responsive">
             <table class="table table-borderless mb-0">
                 <tbody>
-                    @foreach (var employee in Employees)
+                    @foreach (var employee in FilteredEmployees)
                     {
                         <tr class="shadow-lg m-1 employee-row mb-5">
                             <td class="centered-cell"><img class="round-image" width="60" src="@employee.ImgUrl" /></td>
@@ -24,6 +30,9 @@
                             </td>
                             <td class="centered-cell @GetEmployeeTypeStyle(employee.Type)">@employee.Type.GetDisplayName()</td>
                             <td class="centered-cell employee-salary">$@employee.Salary</td>
+                            <td class="centered-cell">
+                                <TableButton OnClickCallback="@(() => NavigateToEmployeeDetail(employee.Id))" />
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -31,16 +40,26 @@
         </div>
     </Card>
 }
+else
+{
+    <p>No employees match the search criteria.</p>
+}
 
 @code {
     [Inject] private IEmployeeService EmployeeService { get; set; }
     [Inject] private NavigationManager NavigationManager { get; set; }
 
     private List<Employee>? Employees;
+    private string SearchTerm { get; set; } = string.Empty;
+    private List<Employee>? FilteredEmployees =>
+        string.IsNullOrEmpty(SearchTerm)
+            ? Employees
+            : Employees?.Where(e => e.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
+                || e.Position.GetDisplayName().Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
 
     protected override async Task OnInitializedAsync()
     {
-        var response = await EmployeeService.GetEmployeesAsync();
+        var response = await EmployeeService.GetEmployees();
         Employees = response.Employees;
     }
 
@@ -49,7 +68,12 @@
         EmployeeType.Freelance => "freelance",
         EmployeeType.PartTime => "part-time",
         EmployeeType.Casual => "casual",
-        EmployeeType.FullTime => "full-time"
+        EmployeeType.FullTime => "full-time",
+        _ => string.Empty
     };
-}
 
+    private void NavigateToEmployeeDetail(int employeeId)
+    {
+        NavigationManager.NavigateTo($"/employee/{employeeId}");
+    }
+}

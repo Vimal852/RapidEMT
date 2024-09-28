@@ -2,22 +2,22 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RapidEMT.Models;
 using RapidEMT.Services;
+using Blazored.Toast;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 // Register the DbContext
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DBcon")));
 
-// Register other services
-builder.Services.AddSingleton<IEmployeeService, EmployeeService>();
+// Register other services as scoped
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddBlazoredToast(); 
 
-
-// Add services to the container.
+// Add Identity services
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -31,15 +31,21 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 
 var app = builder.Build();
 
+// Create the database if it doesn't exist
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
     dbContext.Database.EnsureCreated();
 }
 
-if (!app.Environment.IsDevelopment())
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
+    app.UseDeveloperExceptionPage(); // Show detailed error pages in development
+}
+else
+{
+    app.UseExceptionHandler("/Error"); // Handle errors differently in production
 }
 
 app.UseStaticFiles();
