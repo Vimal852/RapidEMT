@@ -1,6 +1,7 @@
 ﻿using Bogus;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,11 @@ namespace RapidEMT.Models
 {
     public class DataContext : IdentityDbContext
     {
-        public DataContext(DbContextOptions<DataContext> options) : base(options)
+        private readonly ILogger<DataContext> _logger;
+
+        public DataContext(DbContextOptions<DataContext> options, ILogger<DataContext> logger) : base(options)
         {
+            _logger = logger;
         }
 
         public DbSet<Employee> Employees { get; set; }
@@ -21,6 +25,69 @@ namespace RapidEMT.Models
 
             // Seed data
             builder.Entity<Employee>().HasData(GetEmployees());
+        }
+
+        public override int SaveChanges()
+        {
+            TrackChanges();
+            return base.SaveChanges();
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            TrackChanges();
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void TrackChanges()
+        {
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    LogInsert(entry);
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    LogUpdate(entry);
+                }
+                else if (entry.State == EntityState.Deleted)
+                {
+                    LogDelete(entry);
+                }
+            }
+        }
+
+        private void LogInsert(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+        {
+            var entityName = entry.Entity.GetType().Name;
+            var entityId = entry.Property("Id")?.CurrentValue ?? "Unknown ID";
+            _logger.LogInformation("New {EntityName} (ID: {EntityId}) added.", entityName, entityId);
+        }
+
+        private void LogUpdate(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+        {
+            var entityName = entry.Entity.GetType().Name;
+            var entityId = entry.Property("Id")?.CurrentValue ?? "Unknown ID";
+
+            foreach (var property in entry.OriginalValues.Properties)
+            {
+                var oldValue = entry.OriginalValues[property];
+                var newValue = entry.CurrentValues[property];
+
+                if (!Equals(oldValue, newValue)) // Log only changed values
+                {
+                    _logger.LogInformation("{EntityName} (ID: {EntityId}) updated: {Property} changed from '{OldValue}' to '{NewValue}'",
+                        entityName, entityId, property.Name, oldValue, newValue);
+                }
+            }
+        }
+
+        private void LogDelete(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry)
+        {
+            var entityName = entry.Entity.GetType().Name;
+            var entityId = entry.Property("Id")?.CurrentValue ?? "Unknown ID";
+            _logger.LogInformation("{EntityName} (ID: {EntityId}) deleted.", entityName, entityId);
         }
 
         private List<Employee> GetEmployees()
